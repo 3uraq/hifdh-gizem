@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hifdh">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="favicon.svg">
+<title>Hifdh Tracker</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+:root{
+  --bg:#0c0818;
+  --bg2:#160d2c;
+  --card:rgba(139,92,246,.07);
+  --border:rgba(139,92,246,.18);
+  --purple:#a855f7;
+  --purple2:#7c3aed;
+  --lavender:#c4b5fd;
+  --rose:#e879f9;
+  --gold:#f0c040;
+  --gold2:#c09020;
+  --green:#34d399;
+  --text:#f5f0ff;
+  --text2:#7060a0;
+  --r:14px;
+  --nav:70px;
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  max-width:430px;
+  margin:0 auto;
+  overflow-x:hidden;
+  position:relative;
+}
+body::before{
+  content:'';position:fixed;top:-180px;left:50%;transform:translateX(-50%);
+  width:650px;height:420px;
+  background:radial-gradient(ellipse,rgba(139,92,246,.16) 0%,transparent 68%);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;bottom:-100px;right:-80px;
+  width:300px;height:300px;
+  background:radial-gradient(ellipse,rgba(232,121,249,.08) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+.hidden{display:none!important}
+
+/* ====== SETUP ====== */
+#setup{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 28px;position:relative;z-index:1;
+}
+.setup-moon{font-size:72px;margin-bottom:10px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.setup-arabic{
+  font-size:22px;color:var(--gold);margin-bottom:8px;
+  letter-spacing:2px;text-shadow:0 0 20px rgba(240,192,64,.4);
+}
+.setup-title{font-size:28px;font-weight:800;margin-bottom:6px;letter-spacing:-.5px}
+.setup-title span{
+  background:linear-gradient(135deg,var(--lavender),var(--rose));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.setup-personal{
+  font-size:16px;font-weight:700;color:var(--lavender);margin-bottom:6px;
+}
+.setup-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:36px;line-height:1.75;max-width:300px}
+.input-group{width:100%;margin-bottom:16px}
+.input-group label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px}
+.input-group input{
+  width:100%;padding:15px 18px;
+  background:rgba(139,92,246,.07);border:1.5px solid var(--border);
+  border-radius:var(--r);color:var(--text);font-size:16px;outline:none;transition:.25s;
+}
+.input-group input:focus{border-color:var(--purple);background:rgba(139,92,246,.12)}
+.input-group input[type="date"]{color-scheme:dark}
+.btn-purple{
+  width:100%;padding:17px;
+  background:linear-gradient(135deg,var(--purple),var(--purple2));
+  border:none;border-radius:var(--r);color:#fff;
+  font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;
+  transition:.2s;letter-spacing:.3px;
+  box-shadow:0 4px 28px rgba(139,92,246,.4);
+}
+.btn-purple:active{transform:scale(.97)}
+
+/* ====== APP ====== */
+#app{padding-bottom:var(--nav);position:relative;z-index:1}
+
+/* ====== HEADER ====== */
+.hdr{
+  padding:54px 20px 16px;position:sticky;top:0;z-index:10;
+  background:rgba(12,8,24,.9);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border-bottom:1px solid var(--border);
+}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.hdr-name{font-size:18px;font-weight:700}
+.hdr-date{font-size:12px;color:var(--text2);margin-top:2px}
+.streak-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(232,121,249,.14);border:1px solid rgba(232,121,249,.3);
+  border-radius:20px;padding:7px 13px;font-size:14px;font-weight:700;color:var(--rose);flex-shrink:0;
+}
+.xp-wrap{display:flex;align-items:center;gap:10px}
+.xp-labels{flex-shrink:0}
+.xp-level{font-size:12px;font-weight:700;color:var(--lavender)}
+.xp-next{font-size:11px;color:var(--text2);margin-top:1px}
+.xp-bar-bg{flex:1;height:7px;background:rgba(139,92,246,.15);border-radius:4px;overflow:hidden}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--purple2),var(--purple),var(--rose));border-radius:4px;transition:width .7s cubic-bezier(.34,1.56,.64,1)}
+
+/* ====== SCREENS ====== */
+.screen{padding:16px 16px 0;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ====== TODAY ====== */
+.day-hero{
+  background:linear-gradient(135deg,rgba(22,13,44,.95),rgba(12,8,24,.9));
+  border:1px solid var(--border);border-radius:20px;padding:20px;margin-bottom:16px;
+  text-align:center;position:relative;overflow:hidden;
+}
+.day-hero::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:110px;height:110px;
+  background:radial-gradient(circle,rgba(139,92,246,.2),transparent 70%);border-radius:50%;
+}
+.day-num{
+  font-size:58px;font-weight:900;line-height:1;letter-spacing:-3px;
+  background:linear-gradient(135deg,var(--lavender),var(--rose));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.day-of{font-size:13px;color:var(--text2);margin-top:3px}
+.day-pb-wrap{margin-top:16px}
+.day-pb-bg{height:10px;background:rgba(139,92,246,.12);border-radius:5px;overflow:hidden}
+.day-pb-fill{height:100%;background:linear-gradient(90deg,var(--purple2),var(--purple),var(--rose));border-radius:5px;transition:width .6s cubic-bezier(.34,1.56,.64,1)}
+.day-pb-text{font-size:12px;color:var(--text2);margin-top:7px}
+
+.section-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 10px}
+
+/* ====== TASKS ====== */
+.task{
+  display:flex;align-items:center;gap:13px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 15px;margin-bottom:10px;
+  cursor:pointer;transition:.2s;-webkit-user-select:none;user-select:none;
+}
+.task:active{transform:scale(.985)}
+.task.done{background:rgba(52,211,153,.07);border-color:rgba(52,211,153,.28)}
+.task.na{opacity:.35;pointer-events:none}
+.task-ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+.task-body{flex:1;min-width:0}
+.task-type{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.task-val{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-chk{
+  width:28px;height:28px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  transition:.3s;flex-shrink:0;color:transparent;
+}
+.task.done .task-chk{background:var(--green);border-color:var(--green);color:#0c0818;animation:pop .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(0) rotate(-90deg)}to{transform:scale(1) rotate(0)}}
+
+.th .task-ico{background:rgba(240,192,64,.13)} .th .task-type{color:var(--gold)}
+.tm .task-ico{background:rgba(168,139,250,.13)} .tm .task-type{color:var(--lavender)}
+.tl .task-ico{background:rgba(52,211,153,.12)}  .tl .task-type{color:var(--green)}
+.ta .task-ico{background:rgba(232,121,249,.12)}  .ta .task-type{color:var(--rose)}
+
+.done-banner{
+  background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(232,121,249,.06));
+  border:1px solid rgba(139,92,246,.35);
+  border-radius:16px;padding:22px;text-align:center;margin-top:6px;
+}
+.done-banner-icon{font-size:36px;margin-bottom:8px}
+.done-banner-arabic{font-size:18px;color:var(--gold);margin-bottom:6px;text-shadow:0 0 12px rgba(240,192,64,.4)}
+.done-banner-txt{font-size:13px;color:var(--text2);line-height:1.65}
+
+/* ====== PLAN GRID ====== */
+.plan-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pday{
+  aspect-ratio:1;border-radius:11px;background:var(--card);border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:.2s;
+}
+.pday:active{transform:scale(.93)}
+.pday.today{border-color:var(--purple);background:rgba(139,92,246,.14)}
+.pday.pdone{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.32)}
+.pday.partial{background:rgba(139,92,246,.09);border-color:rgba(139,92,246,.28)}
+.pday.missed{background:rgba(232,121,249,.07);border-color:rgba(232,121,249,.22)}
+.pday.future{opacity:.3;cursor:default}
+.pday-wd{font-size:9px;color:var(--text2);font-weight:700}
+.pday-n{font-size:17px;font-weight:800}
+.pday-dots{display:flex;gap:2px;margin-top:3px}
+.pday-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.12)}
+.pday-dot.on{background:var(--green)}
+.pdone .pday-n{color:var(--green)}
+.today .pday-n{color:var(--lavender)}
+.missed .pday-n{color:var(--rose)}
+
+/* ====== ACHIEVEMENTS ====== */
+.ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ach{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;transition:.3s}
+.ach.unlocked{
+  background:linear-gradient(135deg,rgba(139,92,246,.16),rgba(232,121,249,.06));
+  border-color:rgba(168,139,250,.45);
+  box-shadow:0 0 20px rgba(139,92,246,.15);
+}
+.ach-ico{font-size:30px;margin-bottom:7px;transition:.3s}
+.ach-name{font-size:11px;font-weight:700;line-height:1.3}
+.ach-xp{font-size:10px;color:var(--lavender);margin-top:3px;font-weight:700}
+.ach.locked .ach-ico{filter:grayscale(1);opacity:.22}
+.ach.locked .ach-name{color:var(--text2)}
+.ach.locked .ach-xp{color:var(--text2)}
+
+/* ====== STATS ====== */
+.ring-wrap{display:flex;justify-content:center;margin:16px 0 20px}
+.ring{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.ring svg{transform:rotate(-90deg)}
+.ring-txt{position:absolute;text-align:center}
+.ring-pct{
+  font-size:30px;font-weight:900;
+  background:linear-gradient(135deg,var(--lavender),var(--rose));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.ring-lbl{font-size:11px;color:var(--text2)}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid rgba(139,92,246,.1)}
+.stat-row:last-child{border:none}
+.stat-lbl{font-size:14px;color:var(--text2)}
+.stat-val{font-size:15px;font-weight:700}
+.wbar{margin-bottom:14px}
+.wbar-lbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px}
+.wbar-lbl span:last-child{font-weight:700;color:var(--lavender)}
+.wbar-bg{height:9px;background:rgba(139,92,246,.12);border-radius:5px;overflow:hidden}
+.wbar-fill{height:100%;background:linear-gradient(90deg,var(--purple2),var(--purple),var(--rose));border-radius:5px}
+
+/* ====== CARD ====== */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+
+/* ====== BOTTOM NAV ====== */
+.bnav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;height:var(--nav);
+  background:rgba(12,8,24,.96);border-top:1px solid var(--border);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  display:flex;align-items:center;z-index:100;
+}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:8px 4px;transition:.2s;-webkit-user-select:none;user-select:none}
+.ni:active{opacity:.6}
+.ni-ico{font-size:22px;transition:.25s}
+.ni-lbl{font-size:10px;color:var(--text2);font-weight:700;letter-spacing:.3px;transition:.25s}
+.ni.active .ni-lbl{color:var(--lavender)}
+.ni.active .ni-ico{transform:scale(1.15)}
+
+/* ====== MODAL ====== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:150;display:flex;align-items:flex-end;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:#140a28;border-radius:22px 22px 0 0;padding:24px 20px 36px;
+  width:100%;max-height:85vh;overflow-y:auto;
+  border-top:1px solid var(--border);
+  animation:slideUp .32s cubic-bezier(.34,1.56,.64,1);position:relative;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+.modal-handle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:18px}
+.modal-x{position:absolute;top:20px;right:20px;width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+
+/* ====== TOAST ====== */
+.toast{
+  position:fixed;bottom:calc(var(--nav) + 12px);left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:rgba(20,10,40,.97);border:1px solid rgba(139,92,246,.35);
+  border-radius:22px;padding:12px 22px;font-size:14px;font-weight:600;
+  white-space:nowrap;z-index:200;opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
+  backdrop-filter:blur(16px);box-shadow:0 8px 32px rgba(0,0,0,.5);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ====== CONFETTI ====== */
+.cp{position:fixed;pointer-events:none;z-index:300;width:7px;height:7px;border-radius:2px;animation:cffall 1.5s ease-in forwards}
+@keyframes cffall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* ====== AUDIO PLAYER ====== */
+.player{
+  background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);
+  border-radius:14px;padding:13px 14px;margin-top:-4px;margin-bottom:10px;
+}
+.rec-btns{display:flex;gap:7px;margin-bottom:12px}
+.rec-btn{
+  flex:1;padding:8px 4px;background:transparent;
+  border:1px solid var(--border);border-radius:9px;
+  color:var(--text2);font-size:12px;font-weight:700;
+  cursor:pointer;transition:.2s;-webkit-user-select:none;user-select:none;
+}
+.rec-btn.active{background:rgba(139,92,246,.2);border-color:var(--purple);color:var(--lavender)}
+.rec-btn:active{transform:scale(.96)}
+.player-row{display:flex;align-items:center;gap:10px}
+.play-btn{
+  width:40px;height:40px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--purple2),var(--purple));
+  border:none;color:#fff;font-size:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:.2s;box-shadow:0 2px 12px rgba(139,92,246,.4);
+}
+.play-btn:active{transform:scale(.92)}
+.p-time{font-size:11px;color:var(--text2);flex-shrink:0;min-width:34px;font-variant-numeric:tabular-nums}
+.seek-wrap{
+  flex:1;height:5px;background:rgba(255,255,255,.1);
+  border-radius:3px;cursor:pointer;position:relative;
+}
+.seek-fill{
+  height:100%;background:linear-gradient(90deg,var(--purple2),var(--purple));
+  border-radius:3px;pointer-events:none;position:relative;
+}
+.seek-fill::after{
+  content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);
+  width:11px;height:11px;background:var(--lavender);border-radius:50%;
+  box-shadow:0 0 6px rgba(139,92,246,.6);
+}
+
+/* ====== FINISH ====== */
+.finish{padding:40px 20px;text-align:center}
+.finish-star{font-size:80px;animation:starPulse 2.5s ease-in-out infinite}
+@keyframes starPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1) rotate(4deg)}}
+.finish-title{
+  font-size:30px;font-weight:900;margin:16px 0 8px;
+  background:linear-gradient(135deg,var(--lavender),var(--rose));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.finish-sub{font-size:14px;color:var(--text2);line-height:1.8}
+</style>
+</head>
+<body>
+
+<!-- ===== SETUP ===== -->
+<div id="setup">
+  <div class="setup-moon">🌙</div>
+  <div class="setup-arabic">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+  <div class="setup-title">Hifdh <span>Tracker</span></div>
+  <div class="setup-personal">Für Gizem Umm Talha 💜</div>
+  <div class="setup-sub">Dein persönlicher Begleiter auf dem Weg zur Hafiza. Jeder Vers, den du lernst, leuchtet in deinem Herzen.</div>
+  <div class="input-group">
+    <label>Startdatum — Tag 1 des Plans</label>
+    <input type="date" id="inp-date">
+  </div>
+  <button class="btn-purple" onclick="finishSetup()">Bismillah — Auf geht's ✨</button>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" class="hidden">
+  <div class="hdr">
+    <div class="hdr-top">
+      <div>
+        <div class="hdr-name" id="h-name">—</div>
+        <div class="hdr-date" id="h-date">—</div>
+      </div>
+      <div class="streak-pill" id="h-streak">🔥 0</div>
+    </div>
+    <div class="xp-wrap">
+      <div class="xp-labels">
+        <div class="xp-level" id="h-level">Level 1 · Mubtadia</div>
+        <div class="xp-next" id="h-xpnext">0 XP</div>
+      </div>
+      <div class="xp-bar-bg" style="min-width:110px">
+        <div class="xp-bar-fill" id="h-xpbar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="s-today" class="screen"><div id="today-inner"></div></div>
+  <div id="s-plan"  class="screen hidden">
+    <p class="section-title">28-Tage Übersicht</p>
+    <div class="plan-grid" id="plan-grid"></div>
+  </div>
+  <div id="s-ach" class="screen hidden">
+    <p class="section-title">Errungenschaften</p>
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+  <div id="s-stats" class="screen hidden">
+    <p class="section-title">Gesamtfortschritt</p>
+    <div class="ring-wrap">
+      <div class="ring">
+        <svg width="150" height="150" viewBox="0 0 150 150">
+          <circle cx="75" cy="75" r="62" fill="none" stroke="rgba(139,92,246,.1)" stroke-width="13"/>
+          <circle id="stats-ring" cx="75" cy="75" r="62" fill="none" stroke="url(#rg)" stroke-width="13" stroke-linecap="round" stroke-dasharray="389.6" stroke-dashoffset="389.6"/>
+          <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#e879f9"/>
+          </linearGradient></defs>
+        </svg>
+        <div class="ring-txt">
+          <div class="ring-pct" id="s-pct">0%</div>
+          <div class="ring-lbl">Gesamt</div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><div id="stat-rows"></div></div>
+    <p class="section-title">Wöchentlich</p>
+    <div class="card" id="stat-weeks"></div>
+  </div>
+
+  <div id="s-settings" class="screen hidden">
+    <p class="section-title">Einstellungen</p>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Startdatum ändern</div>
+      <div class="input-group" style="margin-bottom:12px">
+        <label>Tag 1 des Plans</label>
+        <input type="date" id="settings-date" style="width:100%;padding:13px 16px;background:rgba(139,92,246,.07);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:16px;outline:none;color-scheme:dark">
+      </div>
+      <button onclick="changeStartDate()" style="width:100%;padding:13px;background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.4);border-radius:var(--r);color:var(--lavender);font-size:14px;font-weight:700;cursor:pointer">Datum speichern</button>
+    </div>
+
+    <div class="card" style="margin-top:4px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Aufgaben zurücksetzen</div>
+      <button onclick="resetToday()" style="width:100%;padding:13px;background:rgba(232,121,249,.1);border:1px solid rgba(232,121,249,.3);border-radius:var(--r);color:var(--rose);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">
+        🔄 Heutigen Tag zurücksetzen
+      </button>
+      <button onclick="resetAllDays()" style="width:100%;padding:13px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:var(--r);color:#f87171;font-size:14px;font-weight:700;cursor:pointer">
+        ⚠️ Alle Aufgaben zurücksetzen
+      </button>
+    </div>
+
+    <div class="card" style="margin-top:4px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Komplett zurücksetzen</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">Löscht alle Daten — Startdatum, Fortschritt und Erfolge. Die App startet neu.</div>
+      <button onclick="resetAll()" style="width:100%;padding:13px;background:rgba(248,113,113,.12);border:1.5px solid rgba(248,113,113,.4);border-radius:var(--r);color:#f87171;font-size:14px;font-weight:700;cursor:pointer">
+        🗑️ Alles löschen & neu starten
+      </button>
+    </div>
+
+    <div style="text-align:center;padding:20px 0 8px">
+      <div style="font-size:11px;color:var(--text2)">Hifdh Tracker · Für Gizem Umm Talha 💜</div>
+    </div>
+  </div>
+
+  <div class="bnav">
+    <div class="ni active" onclick="nav('today')"><span class="ni-ico">☀️</span><span class="ni-lbl">Heute</span></div>
+    <div class="ni" onclick="nav('plan')"><span class="ni-ico">📅</span><span class="ni-lbl">Plan</span></div>
+    <div class="ni" onclick="nav('ach')"><span class="ni-ico">🏆</span><span class="ni-lbl">Erfolge</span></div>
+    <div class="ni" onclick="nav('stats')"><span class="ni-ico">📊</span><span class="ni-lbl">Stats</span></div>
+    <div class="ni" onclick="nav('settings')"><span class="ni-ico">⚙️</span><span class="ni-lbl">Einst.</span></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const NAME = 'Gizem Umm Talha';
+
+// ═══════════════════════════════════════════════
+// AUDIO LINKS — Surah → Rezitator
+// ═══════════════════════════════════════════════
+const AUDIO = {
+  'Fussilat': {
+    abdurrashid: '041 - abdurrashid.mp3',
+    akhdar:      '041 - akdar.mp3',
+  },
+  'Sura': {
+    abdurrashid: '042 - abdurrashid.mp3',
+    akhdar:      '042 - akdar.mp3',
+  },
+};
+
+// ═══════════════════════════════════════════════
+// PLAN DATA
+// ═══════════════════════════════════════════════
+const PLAN = [
+  {d:1, w:'MO', h:'Fussilat 1–11',   m:null,              l:'Ahqaf',            a:'Fussilat'},
+  {d:2, w:'DI', h:'Fussilat 12–15',  m:'Fussilat 1–11',   l:'Dhariyat',         a:'Fussilat'},
+  {d:3, w:'MI', h:'Fussilat 15–20',  m:'Fussilat 12–15',  l:'Mujadilah',        a:'Fussilat'},
+  {d:4, w:'DO', h:'Fussilat 21–24',  m:'Fussilat 15–20',  l:'Mulk',             a:'Fussilat'},
+  {d:5, w:'FR', h:'Fussilat 25–29',  m:'Fussilat 21–24',  l:'Amma',             a:'Fussilat'},
+  {d:6, w:'SA', h:null,              m:'Fussilat 1–15',   l:'Ahqaf + Dhariyat', a:'Fussilat'},
+  {d:7, w:'SO', h:null,              m:'Fussilat 15–29',  l:'Mujadilah + Amma', a:'Fussilat'},
+  {d:8, w:'MO', h:'Fussilat 30–33',  m:'Fussilat 1–29',   l:'Ahqaf',            a:'Fussilat'},
+  {d:9, w:'DI', h:'Fussilat 34–38',  m:'Fussilat 30–33',  l:'Dhariyat',         a:'Fussilat'},
+  {d:10,w:'MI', h:'Fussilat 39–42',  m:'Fussilat 34–38',  l:'Mujadilah',        a:'Fussilat'},
+  {d:11,w:'DO', h:'Fussilat 43–46',  m:'Fussilat 39–42',  l:'Mulk',             a:'Fussilat'},
+  {d:12,w:'FR', h:'Fussilat 37–50',  m:'Fussilat 43–46',  l:'Amma',             a:'Fussilat'},
+  {d:13,w:'SA', h:null,              m:'Fussilat 37–50',  l:'Ahqaf + Dhariyat', a:'Fussilat'},
+  {d:14,w:'SO', h:null,              m:'Fussilat 1–50',   l:'Mujadilah + Amma', a:'Fussilat'},
+  {d:15,w:'MO', h:'Fussilat 51–54',  m:'Fussilat 1–50',   l:'Ahqaf',            a:'Sura'},
+  {d:16,w:'DI', h:'Sura 1–6',        m:'Fussilat 51–54',  l:'Dhariyat',         a:'Sura'},
+  {d:17,w:'MI', h:'Sura 7–10',       m:'Sura 1–6',        l:'Mujadilah',        a:'Sura'},
+  {d:18,w:'DO', h:'Sura 11–13',      m:'Sura 7–10',       l:'Mulk',             a:'Sura'},
+  {d:19,w:'FR', h:'Sura 14–15',      m:'Sura 11–13',      l:'Amma',             a:'Sura'},
+  {d:20,w:'SA', h:null,              m:'Sura 14–15',      l:'Ahqaf + Dhariyat', a:'Sura'},
+  {d:21,w:'SO', h:null,              m:'Sura 1–15',       l:'Mujadilah + Amma', a:'Sura'},
+  {d:22,w:'MO', h:'Sura 16–19',      m:'Sura 1–15',       l:'Ahqaf',            a:'Sura'},
+  {d:23,w:'DI', h:'Sura 20–22',      m:'Sura 16–19',      l:'Dhariyat',         a:'Sura'},
+  {d:24,w:'MI', h:'Sura 23–26',      m:'Sura 20–22',      l:'Mujadilah',        a:'Sura'},
+  {d:25,w:'DO', h:'Sura 27–31',      m:'Sura 23–26',      l:'Mulk',             a:'Sura'},
+  {d:26,w:'FR', h:'Sura 32–38',      m:'Sura 27–31',      l:'Amma',             a:'Sura'},
+  {d:27,w:'SA', h:null,              m:'Sura 32–38',      l:'Ahqaf + Dhariyat', a:'Sura'},
+  {d:28,w:'SO', h:null,              m:'Fussilat + Sura', l:'Mujadilah + Amma', a:'Sura'},
+];
+
+// ═══════════════════════════════════════════════
+// ACHIEVEMENTS — thematisch & persönlich
+// ═══════════════════════════════════════════════
+const ACHS = [
+  {
+    id:'day1', ico:'🌙', name:'Bismillah',
+    desc:'Die Reise der tausend Meilen beginnt mit einem einzigen Schritt.',
+    xp:50, chk:s=>doneCount(s)>=1
+  },
+  {
+    id:'hifdh1', ico:'✍️', name:'Erste Verse',
+    desc:'Die ersten Worte des Qurans haben ihr Herz gefunden.',
+    xp:40, chk:s=>Object.values(s.days).some(d=>d.h)
+  },
+  {
+    id:'perfect', ico:'💜', name:'Vollkommener Tag',
+    desc:'Alle vier Säulen an einem Tag erfüllt. Subhan Allah.',
+    xp:100, chk:s=>hasPerfectDay(s)
+  },
+  {
+    id:'streak3', ico:'🔥', name:'Unaufhaltsam',
+    desc:'Drei Tage in Folge — der Funke wird zur Flamme.',
+    xp:75, chk:s=>(s.maxStreak||0)>=3||getStreak(s)>=3
+  },
+  {
+    id:'week1', ico:'🌸', name:'Erste Woche',
+    desc:'Sieben Tage Beständigkeit. Die Engel bezeugen es.',
+    xp:130, chk:s=>doneCount(s)>=7
+  },
+  {
+    id:'streak7', ico:'⚡', name:'Sieben Tage Licht',
+    desc:'Eine ganze Woche ohne Unterbrechung. Allahu Akbar!',
+    xp:160, chk:s=>(s.maxStreak||0)>=7||getStreak(s)>=7
+  },
+  {
+    id:'half', ico:'🎯', name:'Halbzeit',
+    desc:'Die Hälfte des Weges liegt hinter dir — das Ziel ist in Sicht.',
+    xp:200, chk:s=>doneCount(s)>=14
+  },
+  {
+    id:'reader', ico:'📖', name:'Liebhaberin des Lesens',
+    desc:'Zehnmal den Quran im Herzen gespürt.',
+    xp:90, chk:s=>Object.values(s.days).filter(d=>d.l).length>=10
+  },
+  {
+    id:'listener', ico:'🎧', name:'Lauschende Seele',
+    desc:'Zehnmal dem Klang der Worte Allahs gelauscht.',
+    xp:90, chk:s=>Object.values(s.days).filter(d=>d.a).length>=10
+  },
+  {
+    id:'week3', ico:'🌟', name:'Drei Wochen Kraft',
+    desc:'21 Tage — eine Gewohnheit ist geboren. Masha Allah!',
+    xp:260, chk:s=>doneCount(s)>=21
+  },
+  {
+    id:'str14', ico:'🏅', name:'Standhaftigkeit',
+    desc:'14 Tage am Stück — wahre Beständigkeit ist selten.',
+    xp:220, chk:s=>(s.maxStreak||0)>=14||getStreak(s)>=14
+  },
+  {
+    id:'hafiza', ico:'👑', name:'Hafiza',
+    desc:'Alle 28 Tage vollständig. Gizem, du bist eine Hafiza! 💜',
+    xp:600, chk:s=>doneCount(s)>=28
+  },
+];
+
+// ═══════════════════════════════════════════════
+// LEVELS — feminisiert
+// ═══════════════════════════════════════════════
+const LEVELS = [
+  {lv:1, name:'Mubtadia',    minXP:0},
+  {lv:2, name:'Taliba',      minXP:150},
+  {lv:3, name:'Mutawassita', minXP:420},
+  {lv:4, name:'Mutaqaddima', minXP:900},
+  {lv:5, name:'Hafiza',      minXP:1600},
+];
+
+// ═══════════════════════════════════════════════
+// MOTIVATIONSSPRÜCHE (täglich rotierend)
+// ═══════════════════════════════════════════════
+const QUOTES = [
+  // Quran
+  {ar:'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
+   de:'Mit der Schwierigkeit kommt Leichtigkeit.', src:'Quran, Sure 94:6'},
+  {ar:'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',
+   de:'Im Gedenken Allahs finden die Herzen wahre Ruhe.', src:'Quran, Sure 13:28'},
+  {ar:'وَلَقَدْ يَسَّرْنَا الْقُرْآنَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍ',
+   de:'Wir haben den Quran leicht gemacht zum Gedenken — gibt es jemanden, der sich besinnt?', src:'Quran, Sure 54:17'},
+  {ar:'وَنُنَزِّلُ مِنَ الْقُرْآنِ مَا هُوَ شِفَاءٌ وَرَحْمَةٌ',
+   de:'Der Quran ist Heilung und Barmherzigkeit für die Gläubigen.', src:'Quran, Sure 17:82'},
+  {ar:'فَاذْكُرُونِي أَذْكُرْكُمْ',
+   de:'Gedenkt Meiner, so werde Ich euer gedenken.', src:'Quran, Sure 2:152'},
+  {ar:'وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا',
+   de:'Wer Allah fürchtet, dem bereitet Er einen Ausweg.', src:'Quran, Sure 65:2'},
+  {ar:'إِنَّ اللَّهَ مَعَ الصَّابِرِينَ',
+   de:'Allah ist mit den Geduldigen.', src:'Quran, Sure 2:153'},
+  {ar:'وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ',
+   de:'Wenn Meine Diener nach Mir fragen — Ich bin nahe.', src:'Quran, Sure 2:186'},
+  {ar:'يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ',
+   de:'Allah erhöht jene, die glauben und Wissen erlangt haben, um Grade.', src:'Quran, Sure 58:11'},
+  {ar:'وَلَا تَهِنُوا وَلَا تَحْزَنُوا وَأَنتُمُ الْأَعْلَوْنَ',
+   de:'Verliert nicht den Mut und trauert nicht — ihr seid die Überlegenen.', src:'Quran, Sure 3:139'},
+  {ar:'إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ',
+   de:'Wir haben die Erinnerung herabgesandt und Wir sind ihr Hüter.', src:'Quran, Sure 15:9'},
+  {ar:'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ',
+   de:'Unser Herr, schenke uns Freude durch unsere Gefährten und Kinder.', src:'Quran, Sure 25:74'},
+  // Hadith
+  {ar:'خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ',
+   de:'Der Beste unter euch ist, wer den Quran lernt und ihn lehrt.', src:'Hadith, Bukhari #5027'},
+  {ar:'اقْرَأُوا الْقُرْآنَ فَإِنَّهُ يَأْتِي يَوْمَ الْقِيَامَةِ شَفِيعًا لِأَصْحَابِهِ',
+   de:'Lest den Quran — er kommt am Tag der Auferstehung als Fürsprecher für seine Gefährten.', src:'Hadith, Muslim #804'},
+  {ar:'الْمَاهِرُ بِالْقُرْآنِ مَعَ السَّفَرَةِ الْكِرَامِ الْبَرَرَةِ',
+   de:'Wer den Quran fließend rezitiert, ist mit den edlen, gehorsamen Engeln.', src:'Hadith, Bukhari #4937 & Muslim #798'},
+  {ar:'يُقَالُ لِصَاحِبِ الْقُرْآنِ اقْرَأْ وَارْتَقِ وَرَتِّلْ',
+   de:'Dem Gefährten des Qurans wird gesagt: Lies und steige auf — jeder Vers bringt eine Stufe im Paradies.', src:'Hadith, Abu Dawud #1464 & Tirmidhi #2914 (Sahih, al-Albani)'},
+  {ar:'مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ',
+   de:'Wer einen Buchstaben aus dem Buch Allahs liest, erhält dafür eine gute Tat — und eine gute Tat wird zehnfach belohnt.', src:'Hadith, Tirmidhi #2910 (Sahih, al-Albani)'},
+  {ar:'أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ',
+   de:'Allahs liebste Taten sind die beständigen — auch wenn sie gering sind.', src:'Hadith, Bukhari #6464 & Muslim #782'},
+  {ar:'إِنَّ اللَّهَ يَرْفَعُ بِهَذَا الْكِتَابِ أَقْوَامًا وَيَضَعُ بِهِ آخَرِينَ',
+   de:'Allah erhöht durch dieses Buch Völker und erniedrigt andere.', src:'Hadith, Muslim #817'},
+  {ar:'مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ طَرِيقًا إِلَى الْجَنَّةِ',
+   de:'Wer einen Weg geht um Wissen zu suchen, dem ebnet Allah den Weg ins Paradies.', src:'Hadith, Muslim #2699'},
+  {ar:'إِنَّ الدِّينَ يُسْرٌ وَلَنْ يُشَادَّ الدِّينَ أَحَدٌ إِلَّا غَلَبَهُ',
+   de:'Diese Religion ist Leichtigkeit — wer sie übertreibt, dem wird sie zur Last.', src:'Hadith, Bukhari #39'},
+  {ar:'طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ',
+   de:'Das Suchen nach Wissen ist Pflicht für jeden Muslim.', src:'Hadith, Ibn Majah #224 (Sahih, al-Albani)'},
+];
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const KEY = 'hifdh_gizem_v1';
+const load = () => JSON.parse(localStorage.getItem(KEY)||'null');
+const save = s => localStorage.setItem(KEY, JSON.stringify(s));
+const mkState = startDate => ({name:NAME, startDate, days:{}, achievements:[], maxStreak:0});
+
+// ═══════════════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════════════
+const ds  = d => d.toISOString().slice(0,10);
+const tod = () => ds(new Date());
+
+function planDayForDate(state, dk) {
+  const diff = Math.round((new Date(dk) - new Date(state.startDate)) / 86400000) + 1;
+  return (diff >= 1 && diff <= 28) ? diff : 0;
+}
+function currentPlanDay(state) {
+  const diff = Math.round((new Date(tod()) - new Date(state.startDate)) / 86400000) + 1;
+  return Math.max(1, Math.min(diff, 29));
+}
+function dateForDay(state, n) {
+  const d = new Date(state.startDate); d.setDate(d.getDate() + n - 1); return ds(d);
+}
+
+// ═══════════════════════════════════════════════
+// COMPUTED
+// ═══════════════════════════════════════════════
+function tasksTotal(pd) {
+  if (!pd || pd > 28) return 0;
+  return ['h','m','l','a'].filter(k => PLAN[pd-1][k]).length;
+}
+function tasksDone(state, dk) {
+  const pd = planDayForDate(state, dk);
+  if (!pd) return 0;
+  const p = PLAN[pd-1], d = state.days[dk]||{};
+  return ['h','m','l','a'].filter(k => p[k] && d[k]).length;
+}
+function doneCount(state) {
+  return Object.keys(state.days).filter(dk => tasksDone(state,dk) > 0).length;
+}
+function hasPerfectDay(state) {
+  return Object.keys(state.days).some(dk => {
+    const pd = planDayForDate(state,dk); if(!pd) return false;
+    const p = PLAN[pd-1], d = state.days[dk];
+    return ['h','m','l','a'].every(k => !p[k] || d[k]);
+  });
+}
+function getStreak(state) {
+  let streak = 0;
+  const t = new Date(tod());
+  const planEnd = new Date(state.startDate);
+  planEnd.setDate(planEnd.getDate() + 27); // Tag 28
+  const isPastPlan = t > planEnd;
+  const start = isPastPlan ? planEnd : t;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(start); d.setDate(d.getDate()-i);
+    const dk = ds(d), pd = planDayForDate(state,dk);
+    if (!pd) break;
+    if (tasksDone(state,dk) > 0) {
+      streak++;
+    } else if (i === 0 && !isPastPlan) {
+      continue; // heute noch nicht erledigt ist OK
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+function calcXP(state) {
+  let xp = 0;
+  Object.keys(state.days).forEach(dk => {
+    const pd = planDayForDate(state,dk); if(!pd) return;
+    const p = PLAN[pd-1], d = state.days[dk];
+    let dayXP = 0;
+    ['h','m','l','a'].forEach(k => { if(p[k]&&d[k]) dayXP += 25; });
+    xp += dayXP;
+    if (dayXP > 0 && dayXP === tasksTotal(pd)*25) xp += 50;
+  });
+  (state.achievements||[]).forEach(id => {
+    const a = ACHS.find(x=>x.id===id); if(a) xp += a.xp;
+  });
+  return xp;
+}
+function getLevel(xp) {
+  let lv = LEVELS[0];
+  LEVELS.forEach(l => { if(xp >= l.minXP) lv = l; });
+  return lv;
+}
+function getNextLevel(xp) {
+  return LEVELS.find(l => xp < l.minXP) || null;
+}
+function checkAchievements(state) {
+  const had = state.achievements||[], newOnes = [];
+  ACHS.forEach(a => { if(!had.includes(a.id)&&a.chk(state)){had.push(a.id);newOnes.push(a);} });
+  state.achievements = had;
+  return newOnes;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER HEADER
+// ═══════════════════════════════════════════════
+function renderHeader(state) {
+  const streak = getStreak(state);
+  const xp = calcXP(state);
+  const lv = getLevel(xp), next = getNextLevel(xp);
+  const pct = next ? Math.round(((xp-lv.minXP)/(next.minXP-lv.minXP))*100) : 100;
+  document.getElementById('h-name').textContent = `مرحباً، Gizem 💜`;
+  document.getElementById('h-date').textContent = new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('h-streak').textContent = `🔥 ${streak}`;
+  document.getElementById('h-level').textContent = `Lv ${lv.lv} · ${lv.name}`;
+  document.getElementById('h-xpnext').textContent = next ? `${xp} / ${next.minXP} XP` : `${xp} XP · Hafiza ✨`;
+  document.getElementById('h-xpbar').style.width = pct+'%';
+}
+
+// ═══════════════════════════════════════════════
+// RENDER TODAY
+// ═══════════════════════════════════════════════
+function renderToday(state) {
+  const pd = currentPlanDay(state);
+  const dk = tod();
+  const isFuture = new Date(dk) < new Date(state.startDate);
+  const isFinished = pd > 28;
+
+  if (isFuture) {
+    const start = new Date(state.startDate).toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('today-inner').innerHTML = `
+      <div style="text-align:center;padding:60px 20px">
+        <div style="font-size:60px;margin-bottom:16px">⏳</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px">Plan startet bald</div>
+        <div style="font-size:14px;color:var(--text2)">Am ${start} geht es los, Gizem.<br>In sha Allah wird es wunderschön!</div>
+      </div>`; return;
+  }
+  if (isFinished) {
+    document.getElementById('today-inner').innerHTML = `
+      <div class="finish">
+        <div class="finish-star">🌟</div>
+        <div class="finish-title">Alhamdulillah!</div>
+        <div style="font-size:20px;color:var(--gold);margin-bottom:12px;text-shadow:0 0 14px rgba(240,192,64,.4)">
+          بَارَكَ اللَّهُ فِيكِ يَا حَافِظَة
+        </div>
+        <div class="finish-sub">Gizem, du hast alle 28 Tage geschafft.<br><br>
+        Möge Allah ﷻ deinen Quran als Licht in deinem Herzen festigen,<br>
+        dir und Talha damit Segen schenken,<br>
+        und es zum Fürsprecher für dich am Tag der Auferstehung machen.<br><br>
+        <span style="color:var(--lavender)">Ameen ya Rabb al-Alamin.</span></div>
+      </div>`; return;
+  }
+
+  const p = PLAN[pd-1], day = state.days[dk]||{};
+  const total = tasksTotal(pd);
+  const done = ['h','m','l','a'].filter(k=>p[k]&&day[k]).length;
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
+  const quote = QUOTES[(pd-1) % QUOTES.length];
+
+  const tasks = [
+    {k:'h', label:'Hifdh',   ico:'⭐', cls:'th', verb:'Auswendig lernen'},
+    {k:'m', label:'Muraja',  ico:'🔄', cls:'tm', verb:'Wiederholen'},
+    {k:'l', label:'Lesen',   ico:'📖', cls:'tl', verb:'Lesen'},
+    {k:'a', label:'Anhören', ico:'🎧', cls:'ta', verb:'Anhören'},
+  ];
+
+  let html = `
+    <div class="day-hero">
+      <div class="day-num">${pd}</div>
+      <div class="day-of">von 28 Tagen · ${p.w}</div>
+      <div class="day-pb-wrap">
+        <div class="day-pb-bg"><div class="day-pb-fill" style="width:${pct}%"></div></div>
+        <div class="day-pb-text">${done} von ${total} Aufgaben erledigt${pct===100?' ✓':''}</div>
+      </div>
+    </div>
+    <div class="card" style="text-align:center;background:rgba(139,92,246,.05);border-color:rgba(139,92,246,.2)">
+      <div style="font-size:16px;color:var(--gold);margin-bottom:8px;line-height:1.7">${quote.ar}</div>
+      <div style="font-size:13px;color:var(--text);font-style:italic;margin-bottom:6px;line-height:1.6">${quote.de}</div>
+      <div style="font-size:10px;color:var(--text2);letter-spacing:.4px;text-transform:uppercase">${quote.src}</div>
+    </div>
+    <p class="section-title">Aufgaben für heute</p>`;
+
+  tasks.forEach(t => {
+    if (!p[t.k]) return;
+    const isDone = !!day[t.k];
+    html += `
+      <div class="task ${t.cls}${isDone?' done':''}" onclick="toggleTask('${dk}','${t.k}')">
+        <div class="task-ico">${t.ico}</div>
+        <div class="task-body">
+          <div class="task-type">${t.label}</div>
+          <div class="task-val">${p[t.k]}</div>
+        </div>
+        <div class="task-chk">${isDone?'✓':''}</div>
+      </div>`;
+    // Audio-Player nur für Anhören-Aufgabe
+    if (t.k === 'a' && AUDIO[p[t.k]]) {
+      html += audioPlayerHTML(p[t.k]);
+    }
+  });
+
+  if (done === total && total > 0) {
+    html += `
+      <div class="done-banner">
+        <div class="done-banner-icon">💜</div>
+        <div class="done-banner-arabic">بَارَكَ اللَّهُ فِيكِ</div>
+        <div class="done-banner-txt">Tag ${pd} vollständig! Gizem, Masha Allah —<br>bleib stark bis zum Ende!</div>
+      </div>`;
+  }
+
+  document.getElementById('today-inner').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER PLAN
+// ═══════════════════════════════════════════════
+function renderPlan(state) {
+  const pd = currentPlanDay(state);
+  let html = '';
+  for (let i = 1; i <= 28; i++) {
+    const p = PLAN[i-1], dk = dateForDay(state,i), day = state.days[dk]||{};
+    const tot = tasksTotal(i);
+    const done = ['h','m','l','a'].filter(k=>p[k]&&day[k]).length;
+    const isToday=i===pd, isFut=i>pd;
+    const isDone=!isFut&&done===tot&&tot>0;
+    const isPart=!isFut&&done>0&&done<tot;
+    const isMiss=!isFut&&!isToday&&done===0;
+    let cls='pday';
+    if(isToday)cls+=' today';
+    else if(isDone)cls+=' pdone';
+    else if(isPart)cls+=' partial';
+    else if(isMiss)cls+=' missed';
+    else if(isFut)cls+=' future';
+    const dots=['h','m','l','a'].filter(k=>p[k]).map(k=>`<div class="pday-dot${day[k]?' on':''}"></div>`).join('');
+    html+=`<div class="${cls}" onclick="showDayDetail(${i})">
+      <div class="pday-wd">${p.w}</div>
+      <div class="pday-n">${i}</div>
+      <div class="pday-dots">${dots}</div>
+    </div>`;
+  }
+  document.getElementById('plan-grid').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER ACHIEVEMENTS
+// ═══════════════════════════════════════════════
+function renderAchievements(state) {
+  const unlocked = state.achievements||[];
+  document.getElementById('ach-grid').innerHTML = ACHS.map(a => {
+    const on = unlocked.includes(a.id);
+    return `<div class="ach ${on?'unlocked':'locked'}" title="${a.desc}">
+      <div class="ach-ico">${a.ico}</div>
+      <div class="ach-name">${a.name}</div>
+      <div class="ach-xp">${on?'✓ +'+a.xp+' XP':'+'+a.xp+' XP'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// RENDER STATS
+// ═══════════════════════════════════════════════
+function renderStats(state) {
+  const completed = doneCount(state);
+  const pct = Math.round((completed/28)*100);
+  const xp = calcXP(state);
+  const streak = getStreak(state);
+  const maxStreak = Math.max(state.maxStreak||0, streak);
+  const lv = getLevel(xp);
+  const C = 389.6;
+  document.getElementById('stats-ring').style.strokeDashoffset = C-(pct/100*C);
+  document.getElementById('s-pct').textContent = pct+'%';
+  document.getElementById('stat-rows').innerHTML = `
+    <div class="stat-row"><span class="stat-lbl">Tage abgeschlossen</span><span class="stat-val">${completed} / 28</span></div>
+    <div class="stat-row"><span class="stat-lbl">Aktueller Streak</span><span class="stat-val">🔥 ${streak}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Bester Streak</span><span class="stat-val">⭐ ${maxStreak}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Gesamt XP</span><span class="stat-val" style="color:var(--lavender)">${xp} XP</span></div>
+    <div class="stat-row"><span class="stat-lbl">Level</span><span class="stat-val">Lv ${lv.lv} · ${lv.name}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Erfolge</span><span class="stat-val">${(state.achievements||[]).length} / ${ACHS.length}</span></div>`;
+  let wh = '';
+  for (let w=1;w<=4;w++) {
+    let wD=0,wT=0;
+    for (let i=(w-1)*7+1;i<=w*7;i++) {
+      const p=PLAN[i-1],dk=dateForDay(state,i),d=state.days[dk]||{};
+      ['h','m','l','a'].forEach(k=>{if(p[k]){wT++;if(d[k])wD++;}});
+    }
+    const wp=wT>0?Math.round((wD/wT)*100):0;
+    wh+=`<div class="wbar">
+      <div class="wbar-lbl"><span>Woche ${w}</span><span>${wp}%</span></div>
+      <div class="wbar-bg"><div class="wbar-fill" style="width:${wp}%"></div></div>
+    </div>`;
+  }
+  document.getElementById('stat-weeks').innerHTML = wh;
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+let curScreen = 'today';
+function nav(screen) {
+  document.getElementById('s-'+curScreen).classList.add('hidden');
+  document.getElementById('s-'+screen).classList.remove('hidden');
+  document.querySelectorAll('.ni').forEach((el,i)=>{
+    el.classList.toggle('active',['today','plan','ach','stats','settings'][i]===screen);
+  });
+  curScreen = screen;
+  const state = load();
+  renderHeader(state);
+  if(screen==='today')    renderToday(state);
+  if(screen==='plan')     renderPlan(state);
+  if(screen==='ach')      renderAchievements(state);
+  if(screen==='stats')    renderStats(state);
+  if(screen==='settings') renderSettings(state);
+}
+
+function renderSettings(state) {
+  document.getElementById('settings-date').value = state.startDate || tod();
+}
+
+// ═══════════════════════════════════════════════
+// TOGGLE TASK
+// ═══════════════════════════════════════════════
+function toggleTask(dk, k) {
+  const state = load();
+  if (!state.days[dk]) state.days[dk] = {};
+  const was = !!state.days[dk][k];
+  state.days[dk][k] = !was;
+
+  if (!was) {
+    state.maxStreak = Math.max(state.maxStreak||0, getStreak(state));
+    const newA = checkAchievements(state);
+    save(state);
+    confetti();
+    newA.forEach((a,i) => setTimeout(()=>toast(`${a.ico} Erfolg: "${a.name}"! +${a.xp} XP`), i*1700));
+    const pd = planDayForDate(state,dk);
+    if (pd) {
+      const p=PLAN[pd-1], d=state.days[dk];
+      if (['h','m','l','a'].every(k=>!p[k]||d[k]))
+        setTimeout(()=>toast('💜 Vollkommener Tag! +50 XP Bonus!'), 700);
+    }
+  } else {
+    save(state);
+  }
+  renderToday(state);
+  renderHeader(state);
+}
+
+// ═══════════════════════════════════════════════
+// DAY DETAIL
+// ═══════════════════════════════════════════════
+function showDayDetail(n) {
+  const state=load(), p=PLAN[n-1], dk=dateForDay(state,n), day=state.days[dk]||{};
+  const pd=currentPlanDay(state), isFut=n>pd;
+  const dateDisp=new Date(dk).toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+  const tasks=[
+    {k:'h',label:'Hifdh',ico:'⭐',cls:'th'},
+    {k:'m',label:'Muraja',ico:'🔄',cls:'tm'},
+    {k:'l',label:'Lesen',ico:'📖',cls:'tl'},
+    {k:'a',label:'Anhören',ico:'🎧',cls:'ta'},
+  ];
+  let tHtml='';
+  tasks.forEach(t=>{
+    if(!p[t.k]) return;
+    const isDone=!!day[t.k];
+    tHtml+=`<div class="task ${t.cls}${isDone?' done':''}${isFut?' na':''}"
+      ${!isFut?`onclick="modalToggle('${dk}','${t.k}',${n})"`:''}>
+      <div class="task-ico">${t.ico}</div>
+      <div class="task-body"><div class="task-type">${t.label}</div><div class="task-val">${p[t.k]}</div></div>
+      <div class="task-chk">${isDone?'✓':''}</div>
+    </div>`;
+  });
+  document.body.insertAdjacentHTML('beforeend',`
+    <div class="overlay" id="ov" onclick="closeOv(event)">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-x" onclick="document.getElementById('ov').remove()">✕</div>
+        <div class="modal-title">Tag ${n} · ${p.w}</div>
+        <div class="modal-sub">${dateDisp}</div>
+        ${tHtml}
+        ${isFut?'<div style="font-size:13px;color:var(--text2);text-align:center;padding:8px">Dieser Tag liegt noch in der Zukunft 🌙</div>':''}
+      </div>
+    </div>`);
+}
+function modalToggle(dk,k,n){document.getElementById('ov').remove();toggleTask(dk,k);if(curScreen==='plan')renderPlan(load());}
+function closeOv(e){if(e.target.id==='ov')e.target.remove();}
+
+// ═══════════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════════
+function finishSetup() {
+  const date = document.getElementById('inp-date').value;
+  if (!date) { toast('Bitte Startdatum eingeben 📅'); return; }
+  const state = mkState(date);
+  checkAchievements(state);
+  save(state);
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let tTid;
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(tTid); tTid=setTimeout(()=>el.classList.remove('show'),3400);
+}
+
+// ═══════════════════════════════════════════════
+// CONFETTI
+// ═══════════════════════════════════════════════
+const CF=['#a855f7','#c4b5fd','#e879f9','#f0c040','#34d399','#f5f0ff'];
+function confetti() {
+  for(let i=0;i<16;i++){
+    const el=document.createElement('div');
+    el.className='cp';
+    el.style.cssText=`left:${15+Math.random()*70}%;top:${15+Math.random()*35}%;
+      background:${CF[Math.floor(Math.random()*CF.length)]};
+      animation-delay:${Math.random()*.4}s;
+      animation-duration:${1.1+Math.random()*.7}s;
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      width:${6+Math.random()*5}px;height:${6+Math.random()*5}px;`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2300);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// AUDIO PLAYER
+// ═══════════════════════════════════════════════
+let gAudio = null;
+let gSurah = null;
+let gReciter = 'abdurrashid';
+
+function getAudio() {
+  if (!gAudio) {
+    gAudio = new Audio();
+    ['timeupdate','loadedmetadata','ended','play','pause'].forEach(ev =>
+      gAudio.addEventListener(ev, refreshPlayer));
+  }
+  return gAudio;
+}
+
+function audioPlayerHTML(surahKey) {
+  const sid = 'ap_' + surahKey.replace(/\s/g,'_');
+  return `<div class="player" id="${sid}">
+    <div class="rec-btns">
+      <button class="rec-btn active" data-s="${surahKey}" data-r="abdurrashid"
+        onclick="pSelectReciter('abdurrashid','${surahKey}')">🎤 Abdurrashid</button>
+      <button class="rec-btn" data-s="${surahKey}" data-r="akhdar"
+        onclick="pSelectReciter('akhdar','${surahKey}')">🎤 Akhdar</button>
+    </div>
+    <div class="player-row">
+      <button class="play-btn" onclick="pToggle('${surahKey}')">▶</button>
+      <span class="p-time p-cur">0:00</span>
+      <div class="seek-wrap" onclick="pSeek(event,'${surahKey}')">
+        <div class="seek-fill" style="width:0%"></div>
+      </div>
+      <span class="p-time p-tot" style="text-align:right">0:00</span>
+    </div>
+  </div>`;
+}
+
+function pSelectReciter(reciter, surahKey) {
+  const wasPlaying = gAudio && !gAudio.paused && gSurah === surahKey;
+  gReciter = reciter;
+  if (gSurah === surahKey && gAudio) {
+    gAudio.pause();
+    gAudio.src = AUDIO[surahKey][reciter];
+    gAudio.load();
+    if (wasPlaying) gAudio.play().catch(()=>{});
+  }
+  // Update button styles
+  const sid = 'ap_' + surahKey.replace(/\s/g,'_');
+  const el = document.getElementById(sid);
+  if (el) el.querySelectorAll('.rec-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.r === reciter));
+  refreshPlayer();
+}
+
+function pToggle(surahKey) {
+  const audio = getAudio();
+  if (gSurah !== surahKey) {
+    audio.pause();
+    audio.src = AUDIO[surahKey][gReciter];
+    gSurah = surahKey;
+    audio.load();
+    audio.play().catch(()=>{});
+  } else {
+    if (audio.paused) audio.play().catch(()=>{});
+    else audio.pause();
+  }
+}
+
+function pSeek(e, surahKey) {
+  if (!gAudio || !gAudio.duration || gSurah !== surahKey) {
+    pToggle(surahKey); return;
+  }
+  const r = e.currentTarget.getBoundingClientRect();
+  gAudio.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * gAudio.duration;
+}
+
+function fmt(s) {
+  if (!s || isNaN(s)) return '0:00';
+  return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
+}
+
+function refreshPlayer() {
+  if (!gSurah || !gAudio) return;
+  const sid = 'ap_' + gSurah.replace(/\s/g,'_');
+  const el = document.getElementById(sid);
+  if (!el) return;
+  const pct = gAudio.duration ? (gAudio.currentTime / gAudio.duration * 100) : 0;
+  el.querySelector('.play-btn').innerHTML = gAudio.paused ? '▶' : '⏸';
+  el.querySelector('.seek-fill').style.width = pct + '%';
+  el.querySelector('.p-cur').textContent = fmt(gAudio.currentTime);
+  el.querySelector('.p-tot').textContent = fmt(gAudio.duration);
+}
+
+// ═══════════════════════════════════════════════
+// SETTINGS ACTIONS
+// ═══════════════════════════════════════════════
+function changeStartDate() {
+  const date = document.getElementById('settings-date').value;
+  if (!date) { toast('Bitte Datum eingeben 📅'); return; }
+  const state = load();
+  state.startDate = date;
+  save(state);
+  toast('✅ Startdatum gespeichert!');
+  renderAll();
+}
+
+function resetToday() {
+  if (!confirm('Heutigen Tag zurücksetzen?')) return;
+  const state = load();
+  delete state.days[tod()];
+  save(state);
+  toast('🔄 Heutiger Tag zurückgesetzt');
+  renderAll();
+}
+
+function resetAllDays() {
+  if (!confirm('Alle Aufgaben zurücksetzen? XP und Erfolge bleiben erhalten.')) return;
+  const state = load();
+  state.days = {};
+  state.maxStreak = 0;
+  save(state);
+  toast('🔄 Alle Aufgaben zurückgesetzt');
+  renderAll();
+}
+
+function resetAll() {
+  if (!confirm('Wirklich ALLES löschen? Das kann nicht rückgängig gemacht werden.')) return;
+  localStorage.removeItem(KEY);
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('setup').classList.remove('hidden');
+  document.getElementById('inp-date').value = tod();
+  toast('🗑️ Alles zurückgesetzt');
+}
+
+// ═══════════════════════════════════════════════
+// RENDER ALL + INIT
+// ═══════════════════════════════════════════════
+function renderAll(){const s=load();renderHeader(s);renderToday(s);}
+
+(function init(){
+  const s=load();
+  if(s&&s.startDate){
+    document.getElementById('setup').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    renderAll();
+  } else {
+    document.getElementById('inp-date').value=tod();
+  }
+})();
+</script>
+</body>
+</html>
