@@ -327,6 +327,14 @@ body::after{
   box-shadow:0 0 6px rgba(139,92,246,.6);
 }
 
+/* ====== TOGGLE ====== */
+.toggle{position:relative;display:inline-block;width:50px;height:28px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-sl{position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,.1);border-radius:14px;transition:.3s;border:1px solid var(--border)}
+.toggle-sl::before{content:'';position:absolute;width:22px;height:22px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+input:checked + .toggle-sl{background:var(--purple);border-color:var(--purple)}
+input:checked + .toggle-sl::before{transform:translateX(22px)}
+
 /* ====== FINISH ====== */
 .finish{padding:40px 20px;text-align:center}
 .finish-star{font-size:80px;animation:starPulse 2.5s ease-in-out infinite}
@@ -434,6 +442,31 @@ body::after{
       <button onclick="resetAll()" style="width:100%;padding:13px;background:rgba(248,113,113,.12);border:1.5px solid rgba(248,113,113,.4);border-radius:var(--r);color:#f87171;font-size:14px;font-weight:700;cursor:pointer">
         🗑️ Alles löschen & neu starten
       </button>
+    </div>
+
+    <div class="card" style="margin-top:4px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Tägliche Erinnerung</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:14px;font-weight:600">Benachrichtigungen</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Tägl. Erinnerung an Aufgaben</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="notif-toggle" onchange="onNotifToggle(this.checked)">
+          <span class="toggle-sl"></span>
+        </label>
+      </div>
+      <div id="notif-time-wrap" class="hidden">
+        <div class="input-group" style="margin-bottom:12px">
+          <label>Uhrzeit</label>
+          <input type="time" id="notif-time" value="08:00"
+            style="width:100%;padding:13px 16px;background:rgba(139,92,246,.07);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:16px;outline:none;color-scheme:dark">
+        </div>
+        <button onclick="saveNotifTime()" style="width:100%;padding:13px;background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.4);border-radius:var(--r);color:var(--lavender);font-size:14px;font-weight:700;cursor:pointer">
+          🔔 Erinnerung speichern
+        </button>
+        <div id="notif-status" style="font-size:12px;color:var(--text2);text-align:center;margin-top:10px"></div>
+      </div>
     </div>
 
     <div style="text-align:center;padding:20px 0 8px">
@@ -1190,16 +1223,116 @@ function resetAll() {
 }
 
 // ═══════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════
+async function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('./sw.js', {scope: './'});
+  } catch(e) {}
+}
+
+async function scheduleNotification(timeStr) {
+  if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  const reg = await navigator.serviceWorker.ready;
+  if (!reg.active) return;
+
+  const [h, m] = timeStr.split(':').map(Number);
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(h, m, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  const delay = next - now;
+
+  const state = load();
+  const pd = currentPlanDay(state);
+  const dk = tod();
+  const done = tasksDone(state, dk);
+  const total = tasksTotal(pd);
+  const remaining = total - done;
+
+  let body = 'Salam Gizem! Zeit für deinen Hifdh heute 💜';
+  if (remaining > 0) body = `Noch ${remaining} Aufgabe${remaining>1?'n':''} für heute 📖 بِسْمِ اللَّهِ`;
+  if (done === total && total > 0) body = 'Alle Aufgaben erledigt! Masha Allah 💜';
+
+  reg.active.postMessage({type:'SCHEDULE', delay, body});
+}
+
+async function onNotifToggle(enabled) {
+  const state = load();
+  if (enabled) {
+    if (Notification.permission === 'default') {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        document.getElementById('notif-toggle').checked = false;
+        document.getElementById('notif-status').textContent = '⚠️ Bitte Benachrichtigungen in den Einstellungen erlauben.';
+        return;
+      }
+    }
+    if (Notification.permission === 'denied') {
+      document.getElementById('notif-toggle').checked = false;
+      document.getElementById('notif-status').textContent = '⚠️ Benachrichtigungen sind blockiert — bitte in den Browser-Einstellungen aktivieren.';
+      return;
+    }
+    state.notifEnabled = true;
+    state.notifTime = state.notifTime || '08:00';
+    save(state);
+    document.getElementById('notif-time-wrap').classList.remove('hidden');
+    document.getElementById('notif-time').value = state.notifTime;
+    await scheduleNotification(state.notifTime);
+    document.getElementById('notif-status').textContent = `✅ Erinnerung täglich um ${state.notifTime} Uhr`;
+  } else {
+    state.notifEnabled = false;
+    save(state);
+    document.getElementById('notif-time-wrap').classList.add('hidden');
+    document.getElementById('notif-status').textContent = '';
+  }
+}
+
+async function saveNotifTime() {
+  const time = document.getElementById('notif-time').value;
+  if (!time) return;
+  const state = load();
+  state.notifTime = time;
+  save(state);
+  await scheduleNotification(time);
+  document.getElementById('notif-status').textContent = `✅ Erinnerung täglich um ${time} Uhr`;
+  toast(`🔔 Erinnerung gesetzt für ${time} Uhr`);
+}
+
+function renderSettings(state) {
+  document.getElementById('settings-date').value = state.startDate || tod();
+  const toggle = document.getElementById('notif-toggle');
+  toggle.checked = !!state.notifEnabled;
+  const wrap = document.getElementById('notif-time-wrap');
+  if (state.notifEnabled) {
+    wrap.classList.remove('hidden');
+    document.getElementById('notif-time').value = state.notifTime || '08:00';
+    if (Notification.permission === 'granted') {
+      document.getElementById('notif-status').textContent = `✅ Erinnerung täglich um ${state.notifTime||'08:00'} Uhr`;
+    }
+  } else {
+    wrap.classList.add('hidden');
+  }
+}
+
+// ═══════════════════════════════════════════════
 // RENDER ALL + INIT
 // ═══════════════════════════════════════════════
 function renderAll(){const s=load();renderHeader(s);renderToday(s);}
 
 (function init(){
+  registerSW();
   const s=load();
   if(s&&s.startDate){
     document.getElementById('setup').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     renderAll();
+    // Tägl. Benachrichtigung neu planen wenn aktiv
+    if(s.notifEnabled && s.notifTime && Notification.permission==='granted'){
+      scheduleNotification(s.notifTime);
+    }
   } else {
     document.getElementById('inp-date').value=tod();
   }
